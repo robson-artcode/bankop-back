@@ -18,9 +18,9 @@ export class AuthController {
     return this.authService.login(dto);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Get('me')
-  getProfile(@Request() req) {
-    return this.authService.getProfile(req.user.userId);
-  }
+  // @UseGuards(JwtAuthGuard)
+  // @Get('me')
+  // getProfile(@Request() req) {
+  //   return this.authService.getProfile(req.user.userId);
+  // }
 }

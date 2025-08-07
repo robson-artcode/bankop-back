@@ -9,12 +9,38 @@ generator client {
 }
 
 model Users {
-  id        String   @id @default(uuid())
-  email     String   @unique
+  id        String    @id @default(uuid())
+  email     String    @unique
   password  String
   name      String
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  wallets   Wallets[]  // um usuário pode ter várias carteiras
 
   @@map("users")
+}
+
+model Coins {
+  id        String    @id @default(uuid())
+  symbol    String    @unique
+  name      String
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  wallets   Wallets[]
+
+  @@map("coins")
+}
+
+model Wallets {
+  id         String    @id @default(uuid())
+  user       Users     @relation(fields: [userId], references: [id])
+  userId     String    @map("user_id")
+  coin       Coins     @relation(fields: [coinId], references: [id])
+  coinId     String    @map("coin_id")
+  balance    Decimal   @default(0.0) @map("balance")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  @@map("wallets")
+  @@unique([userId, coinId])
 }
