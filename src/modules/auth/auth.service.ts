@@ -23,11 +23,15 @@ export class AuthService {
       },
     });
 
-    const OpCoin = await this.prisma.coins.findUnique({
+    const opCoin = await this.prisma.coins.findUnique({
       where: {
         symbol: "OPCOIN"
       }
     }) as Coins
+
+    if (!opCoin) {
+      throw new Error('Moeda OPCOIN não encontrada')
+    }
 
     const BRLCoin = await this.prisma.coins.findUnique({
       where: {
@@ -35,10 +39,14 @@ export class AuthService {
       }
     }) as Coins
 
+    if (!BRLCoin) {
+      throw new Error('Moeda BRL não encontrada')
+    }
+
     await this.prisma.wallets.create({
       data: {
         userId: user.id,
-        coinId: OpCoin.id,
+        coinId: opCoin.id,
         balance: 5000
       }
     })
@@ -60,14 +68,6 @@ export class AuthService {
     }
     return this.generateToken(user.id);
   }
-
-  // async getProfile(userId: string) {
-  //   const user = await this.prisma.users.findUnique({
-  //     where: { id: userId },
-  //     select: { id: true, name: true, email: true, createdAt: true },
-  //   });
-  //   return user;
-  // }
 
   private generateToken(userId: string) {
     const token = this.jwtService.sign({ userId });

@@ -1,6 +1,7 @@
-import { Controller, UseGuards, Get, Request } from '@nestjs/common';
+import { Controller, UseGuards, Get, Patch, Request, Body } from '@nestjs/common';
 import { WalletService } from './wallets.service';
 import { JwtAuthGuard } from '../auth/jwt.guard';
+import { ConvertDto } from './dto/convert.dto';
 
 @Controller('wallets')
 export class WalletController {
@@ -9,5 +10,11 @@ export class WalletController {
   @Get()
   getWallets(@Request() req) {
     return this.walletService.getWallets(req.user.userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch("convert")
+  convert(@Request() req, @Body() dto: ConvertDto) {
+    return this.walletService.convertOpCoins(req.user.userId, dto);
   }
 }
