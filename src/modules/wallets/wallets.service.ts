@@ -99,8 +99,6 @@ export class WalletService {
       }
     })
 
-    console.log("transactionCreated", updatedOpCoinWallet.balance, updatedBRLCoinWallet.balance, transactionCreated)
-
     return {
       updatedOpCoinBalance: updatedOpCoinWallet.balance,
       updatedBRLCoinBalance: updatedBRLCoinWallet.balance,
