@@ -89,9 +89,31 @@ export class WalletService {
       }
     })
 
+    const transactionCreated = await this.prisma.transactions.create({
+      data: {
+        fromCoinId: opCoin.id,
+        toCoinId: BRLCoin.id,
+        amountFrom: dto.opCoins,
+        amountTo: Number(brazilianRealValue),
+        userId: userId
+      }
+    })
+
+    console.log("transactionCreated", updatedOpCoinWallet.balance, updatedBRLCoinWallet.balance, transactionCreated)
+
     return {
       updatedOpCoinBalance: updatedOpCoinWallet.balance,
-      updatedBRLCoinBalance: updatedBRLCoinWallet.balance
+      updatedBRLCoinBalance: updatedBRLCoinWallet.balance,
+      newTransaction: [
+        {
+          id: transactionCreated.id,
+          fromCoinId: transactionCreated.fromCoinId,
+          toCoinId: transactionCreated.toCoinId,
+          amountFrom: transactionCreated.amountFrom,
+          amountTo: transactionCreated.amountTo,
+          createdAt: transactionCreated.createdAt
+        }
+      ]
     }
   }
 

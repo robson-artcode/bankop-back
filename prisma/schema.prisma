@@ -1,5 +1,5 @@
 datasource db {
-  provider = "postgresql" // ou mysql, sqlite, etc
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -15,7 +15,8 @@ model Users {
   name      String
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
-  wallets   Wallets[]  // um usuário pode ter várias carteiras
+  wallets   Wallets[]
+  transactions Transactions[]
 
   @@map("users")
 }
@@ -27,8 +28,29 @@ model Coins {
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   wallets   Wallets[]
+  fromTransactions Transactions[] @relation("FromTransactions")
+  toTransactions   Transactions[] @relation("ToTransactions")
 
   @@map("coins")
+}
+
+model Transactions {
+  id           String    @id @default(uuid())
+  fromCoinId   String    @map("from_coin_id")
+  toCoinId     String    @map("to_coin_id")
+  fromCoin     Coins     @relation("FromTransactions", fields: [fromCoinId], references: [id])
+  toCoin       Coins     @relation("ToTransactions", fields: [toCoinId], references: [id])
+  amountFrom   Decimal   @map("amount_from")
+  amountTo     Decimal   @map("amount_to")
+  userId       String    @map("user_id")
+  user         Users     @relation(fields: [userId], references: [id])
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  
+  @@map("transactions")
+  @@index([fromCoinId])
+  @@index([toCoinId])
+  @@index([userId])
 }
 
 model Wallets {
@@ -37,10 +59,12 @@ model Wallets {
   userId     String    @map("user_id")
   coin       Coins     @relation(fields: [coinId], references: [id])
   coinId     String    @map("coin_id")
-  balance    Decimal   @default(0.0) @map("balance")
+  balance    Decimal   @default(0.0)
   createdAt  DateTime  @default(now()) @map("created_at")
   updatedAt  DateTime  @updatedAt @map("updated_at")
 
   @@map("wallets")
   @@unique([userId, coinId])
+  @@index([userId])
+  @@index([coinId])
 }
