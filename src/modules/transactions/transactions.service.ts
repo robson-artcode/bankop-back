@@ -8,11 +8,50 @@ export class TransactionService {
   ) {}
 
   async getTransactions(userId: string) {
-    return await this.prisma.transactions.findMany({
+    const transactions = await this.prisma.transactions.findMany({
       where: { userId: userId },
       orderBy: {
         createdAt: 'desc'
+      },
+      include: {
+        type: {
+          select: {
+            id: true,
+            type: true,
+            description: true,
+          }
+        },
+        fromCoin: {
+          select: {
+            id: true,
+            symbol: true,
+            name: true
+          }
+        },
+        toCoin: {
+          select: {
+            id: true,
+            symbol: true,
+            name: true
+          }
+        },
+        userFrom: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          }
+        },
+        userTo: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          }
+        }
       }
     });
+
+    return transactions;
   }
 }

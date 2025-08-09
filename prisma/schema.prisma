@@ -17,6 +17,8 @@ model Users {
   updatedAt DateTime  @updatedAt @map("updated_at")
   wallets   Wallets[]
   transactions Transactions[]
+  sentTransactions     Transactions[] @relation("FromTransactions") 
+  receivedTransactions Transactions[] @relation("ToTransactions") 
 
   @@map("users")
 }
@@ -35,22 +37,39 @@ model Coins {
 }
 
 model Transactions {
-  id           String    @id @default(uuid())
+   id           String    @id @default(uuid())
   fromCoinId   String    @map("from_coin_id")
   toCoinId     String    @map("to_coin_id")
   fromCoin     Coins     @relation("FromTransactions", fields: [fromCoinId], references: [id])
   toCoin       Coins     @relation("ToTransactions", fields: [toCoinId], references: [id])
-  amountFrom   Decimal   @map("amount_from")
-  amountTo     Decimal   @map("amount_to")
+  amountFrom   Decimal    @map("amount_from")
+  amountTo     Decimal    @map("amount_to")
   userId       String    @map("user_id")
   user         Users     @relation(fields: [userId], references: [id])
+  typeId       String    @map("type_id")
+  type         TransactionTypes @relation(fields: [typeId], references: [id])
+  userFromId   String @map("user_from_id") 
+  userFrom     Users  @relation("FromTransactions", fields: [userFromId], references: [id])
+  userToId     String @map("user_to_id")   
+  userTo       Users  @relation("ToTransactions", fields: [userToId], references: [id])
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
   
   @@map("transactions")
-  @@index([fromCoinId])
-  @@index([toCoinId])
+  @@index([fromCoinId, toCoinId])
   @@index([userId])
+  @@index([createdAt])
+}
+
+model TransactionTypes {
+  id           String    @id @default(uuid())
+  type         String   
+  description  String?
+  transactions Transactions[]
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  
+  @@map("transaction_types")
 }
 
 model Wallets {
@@ -59,7 +78,7 @@ model Wallets {
   userId     String    @map("user_id")
   coin       Coins     @relation(fields: [coinId], references: [id])
   coinId     String    @map("coin_id")
-  balance    Decimal   @default(0.0)
+  balance Decimal @default(0.00000000) @db.Decimal(20, 8)
   createdAt  DateTime  @default(now()) @map("created_at")
   updatedAt  DateTime  @updatedAt @map("updated_at")
 
