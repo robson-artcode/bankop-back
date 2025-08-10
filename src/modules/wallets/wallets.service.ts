@@ -1,306 +1,207 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { ConvertDto } from './dto/convert.dto';
-import { Coins } from '@prisma/client';
 import { TransferDto } from './dto/transfer.dto';
+import { Coins, TransactionTypes } from '@prisma/client';
+
 @Injectable()
 export class WalletService {
-  constructor(
-    private readonly prisma: PrismaService,
-  ) {}
+  private readonly OPCOIN_TO_BRL_RATE = 5;
+
+  constructor(private readonly prisma: PrismaService) {}
 
   async getWallets(userId: string) {
+    console.log(userId)
     return await this.prisma.wallets.findMany({
-      where: { userId: userId },
-      include: {
-        coin: true 
-      }
+      where: { userId },
+      include: { coin: true }
     });
   }
 
   async convertOpCoins(userId: string, dto: ConvertDto) {
+    return this.prisma.$transaction(async (prisma) => {
+      // Busca moedas
+      const [opCoin, brlCoin] = await Promise.all([
+        this.findCoin('OPCOIN'),
+        this.findCoin('BRL')
+      ]);
 
-    const opCoin = await this.prisma.coins.findUnique({
-      where: {
-        symbol: 'OPCOIN'
+      // Busca wallets
+      const [walletOpCoin, walletBrlCoin] = await Promise.all([
+        this.findUserWallet(userId, opCoin.id),
+        this.findUserWallet(userId, brlCoin.id)
+      ]);
+
+      // Valida saldo
+      if (Number(walletOpCoin.balance) < dto.opCoins) {
+        throw new Error('Saldo insuficiente');
       }
-    }) as Coins
 
-    if (!opCoin) {
-      throw new Error('Moeda OPCOIN não encontrada')
-    }
+      // Calcula novos valores
+      const opCoinsUpdated = Number(walletOpCoin.balance) - dto.opCoins;
+      const brlAmount = dto.opCoins / this.OPCOIN_TO_BRL_RATE;
+      const brlUpdated = Number(walletBrlCoin.balance) + brlAmount;
 
-    const BRLCoin = await this.prisma.coins.findUnique({
-      where: {
-        symbol: "BRL"
-      }
-    }) as Coins
+      // Atualiza wallets
+      await Promise.all([
+        prisma.wallets.update({
+          where: { id: walletOpCoin.id },
+          data: { balance: opCoinsUpdated }
+        }),
+        prisma.wallets.update({
+          where: { id: walletBrlCoin.id },
+          data: { balance: brlUpdated }
+        })
+      ]);
 
-    if (!BRLCoin) {
-      throw new Error('Moeda BRL não encontrada')
-    }
-
-
-    const walletOpCoin = await this.prisma.wallets.findFirst({
-      where: {
+      // Cria transação
+      const transaction = await this.createConvertTransaction(
         userId,
-        coinId: opCoin.id
+        opCoin.id,
+        brlCoin.id,
+        dto.opCoins,
+        brlAmount
+      );
+
+      return {
+        updatedOpCoinBalance: opCoinsUpdated,
+        updatedBRLCoinBalance: brlUpdated,
+        newTransaction: [transaction]
+      };
+    });
+  }
+
+  async transfer(userId: string, dto: TransferDto) {
+    return this.prisma.$transaction(async (prisma) => {
+      const coin = await this.findCoin(dto.amountCoin);
+      const userTo = await this.findUserByEmail(dto.email);
+      
+      const [walletFrom, walletTo] = await Promise.all([
+        this.findUserWallet(userId, coin.id),
+        this.findUserWallet(userTo.id, coin.id)
+      ]);
+
+      // Valida saldo
+      if (Number(walletFrom.balance) < dto.amount) {
+        throw new Error('Saldo insuficiente');
       }
-    })
 
-    if (!walletOpCoin) {
-      throw new Error('Wallet de OPCOIN não encontrada')
-    }
+      // Atualiza saldos
+      const newFromBalance = Number(walletFrom.balance) - dto.amount;
+      const newToBalance = Number(walletTo.balance) + dto.amount;
 
-    const walletBRLCoin = await this.prisma.wallets.findFirst({
-      where: {
+      await Promise.all([
+        prisma.wallets.update({
+          where: { id: walletFrom.id },
+          data: { balance: newFromBalance }
+        }),
+        prisma.wallets.update({
+          where: { id: walletTo.id },
+          data: { balance: newToBalance }
+        })
+      ]);
+
+      // Cria transação
+      const transaction = await this.createTransferTransaction(
         userId,
-        coinId: BRLCoin.id
-      }
-    })
+        userTo.id,
+        coin.id,
+        dto.amount
+      );
 
-    if (!walletBRLCoin) {
-      throw new Error('Wallet de BRL não encontrada')
-    }
+      return {
+        newBalance: newFromBalance,
+        amount: dto.amount,
+        amountCoin: dto.amountCoin,
+        newTransaction: [transaction]
+      };
+    });
+  }
 
-    // Using opCoins Balance
-    const opCoinsUpdated = Number(walletOpCoin.balance) - dto.opCoins;
+  private async findCoin(symbol: string): Promise<Coins> {
+    const coin = await this.prisma.coins.findUnique({ where: { symbol } });
+    if (!coin) throw new NotFoundException(`Moeda ${symbol} não encontrada`);
+    return coin;
+  }
 
-    // Increasing BRL
-    const INDEX_OPCOIN_BRL = 5;
-    const brazilianRealValue = dto.opCoins / INDEX_OPCOIN_BRL;
-    const brazilianRealUpdated = Number(walletBRLCoin.balance) + brazilianRealValue
+  private async findUserWallet(userId: string, coinId: string) {
+    const wallet = await this.prisma.wallets.findFirst({
+      where: { userId, coinId }
+    });
+    if (!wallet) throw new NotFoundException('Carteira não encontrada');
+    return wallet;
+  }
 
-    const updatedOpCoinWallet = await this.prisma.wallets.update({
-      where: { 
-        id: walletOpCoin.id
-      },
-      data: {
-        balance: opCoinsUpdated
-      }
-    })
+  private async findUserByEmail(email: string) {
+    const user = await this.prisma.users.findUnique({ where: { email } });
+    if (!user) throw new NotFoundException('Usuário não encontrado');
+    return user;
+  }
 
-    const updatedBRLCoinWallet = await this.prisma.wallets.update({
-      where: { 
-        id: walletBRLCoin.id
-      },
-      data: {
-        balance: brazilianRealUpdated
-      }
-    })
-    
+  private async findTransactionType(type: string): Promise<TransactionTypes> {
     const transactionType = await this.prisma.transactionTypes.findFirst({
-      where: {
-        type: "CONVERT"
-      }
-    })
+      where: { type }
+    });
+    if (!transactionType) throw new NotFoundException('Tipo de transação não encontrado');
+    return transactionType;
+  }
 
-    if (!transactionType) {
-      throw new Error('Tipo da transação não encontrada')
-    }
-
-    const newTransaction = await this.prisma.transactions.create({
+  private async createConvertTransaction(
+    userId: string,
+    fromCoinId: string,
+    toCoinId: string,
+    amountFrom: number,
+    amountTo: number
+  ) {
+    const transactionType = await this.findTransactionType('CONVERT');
+    
+    return this.prisma.transactions.create({
       data: {
-        fromCoinId: opCoin.id,
-        toCoinId: BRLCoin.id,
-        amountFrom: dto.opCoins,
-        amountTo: Number(brazilianRealValue),
-        userId: userId,
+        fromCoinId,
+        toCoinId,
+        amountFrom,
+        amountTo,
+        userId,
         userFromId: userId,
         userToId: userId,
         typeId: transactionType.id
       },
       include: {
-        type: {
-          select: {
-            id: true,
-            type: true,
-            description: true,
-          }
-        },
-        fromCoin: {
-          select: {
-            id: true,
-            symbol: true,
-            name: true
-          }
-        },
-        toCoin: {
-          select: {
-            id: true,
-            symbol: true,
-            name: true
-          }
-        },
-        userFrom: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          }
-        },
-        userTo: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          }
-        }
+        type: { select: { id: true, type: true, description: true } },
+        fromCoin: { select: { id: true, symbol: true, name: true } },
+        toCoin: { select: { id: true, symbol: true, name: true } },
+        userFrom: { select: { id: true, name: true, email: true } },
+        userTo: { select: { id: true, name: true, email: true } }
       }
-    })
-
-    return {
-      updatedOpCoinBalance: updatedOpCoinWallet.balance,
-      updatedBRLCoinBalance: updatedBRLCoinWallet.balance,
-      newTransaction: [newTransaction]
-    }
+    });
   }
 
-  async transfer(userId: string, dto: TransferDto) {
-
-    const coinType = await this.prisma.coins.findFirst({
-      where: {
-        symbol: dto.amountCoin
-      }
-    })
-
-    if (!coinType) {
-      throw new Error('Moeda não encontrada')
-    }
-
-    const walletUserFrom = await this.prisma.wallets.findFirst({
-      where: {
-        userId,
-        coinId: coinType.id
-      }
-    })
-
-    if (!walletUserFrom) {
-      throw new Error('Carteira do remetente não encontrada')
-    }
-
-    const userTo = await this.prisma.users.findUnique({
-      where: {
-        email: dto.email
-      }
-    })
-
-    if (!userTo) {
-      throw new Error('Usuário não encontrado')
-    }
-
-
-    const walletUserTo = await this.prisma.wallets.findFirst({
-      where: {
-        userId: userTo.id,
-        coinId: coinType.id
-      }
-    })
-
-     if (!walletUserTo) {
-      throw new Error('Carteira do destinatário não encontrada')
-    }
+  private async createTransferTransaction(
+    userId: string,
+    userToId: string,
+    coinId: string,
+    amount: number
+  ) {
+    const transactionType = await this.findTransactionType('TRANSFER');
     
-    // Calculation
-    const newUserFromBalance = Number(walletUserFrom.balance) - dto.amount;
-    const newUserToBalance = Number(walletUserTo.balance) + dto.amount;
-    
-    await this.prisma.wallets.update({
-      where: { 
-        id: walletUserFrom.id
-      },
+    return this.prisma.transactions.create({
       data: {
-        balance: newUserFromBalance
-      }
-    })
-
-    await this.prisma.wallets.update({
-      where: { 
-        id: walletUserTo.id
-      },
-      data: {
-        balance: newUserToBalance
-      }
-    })
-
-    const transactionType = await this.prisma.transactionTypes.findFirst({
-      where: {
-        type: "TRANSFER"
-      }
-    })
-
-    if (!transactionType) {
-      throw new Error('Tipo da transação não encontrada')
-    }
-
-    await this.prisma.transactions.create({
-       data: {
-        fromCoinId: coinType.id,
-        toCoinId: coinType.id,
-        amountFrom: 0,
-        amountTo: dto.amount,
-        userId: userTo.id,
-        userFromId: userId,
-        userToId: userTo.id,
-        typeId: transactionType.id
-      }
-    })
-
-    const newTransaction = await this.prisma.transactions.create({
-      data: {
-        fromCoinId: coinType.id,
-        toCoinId: coinType.id,
-        amountFrom: dto.amount,
+        fromCoinId: coinId,
+        toCoinId: coinId,
+        amountFrom: amount,
         amountTo: 0,
-        userId: userId,
+        userId,
         userFromId: userId,
-        userToId: userTo.id,
+        userToId: userToId,
         typeId: transactionType.id
       },
       include: {
-        type: {
-          select: {
-            id: true,
-            type: true,
-            description: true,
-          }
-        },
-        fromCoin: {
-          select: {
-            id: true,
-            symbol: true,
-            name: true
-          }
-        },
-        toCoin: {
-          select: {
-            id: true,
-            symbol: true,
-            name: true
-          }
-        },
-        userFrom: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          }
-        },
-        userTo: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          }
-        }
+        type: { select: { id: true, type: true, description: true } },
+        fromCoin: { select: { id: true, symbol: true, name: true } },
+        toCoin: { select: { id: true, symbol: true, name: true } },
+        userFrom: { select: { id: true, name: true, email: true } },
+        userTo: { select: { id: true, name: true, email: true } }
       }
-    })
-
-    return {
-      newBalance: newUserFromBalance,
-      amount: dto.amount,
-      amountCoin: dto.amountCoin,
-      newTransaction: [newTransaction]
-    }
+    });
   }
 }

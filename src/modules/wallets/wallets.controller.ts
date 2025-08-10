@@ -10,6 +10,7 @@ export class WalletController {
   @UseGuards(JwtAuthGuard)
   @Get()
   getWallets(@Request() req) {
+    console.log(req.user)
     return this.walletService.getWallets(req.user.userId);
   }
 
