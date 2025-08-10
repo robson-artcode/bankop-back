@@ -80,6 +80,11 @@ export class WalletService {
         this.findUserWallet(userTo.id, coin.id)
       ]);
 
+      // Verifica e-mails iguais
+       if (userTo.id === userId) {
+        throw new Error('Não é possível transferir para o próprio usuário.');
+      }
+
       // Valida saldo
       if (Number(walletFrom.balance) < dto.amount) {
         throw new Error('Saldo insuficiente');
