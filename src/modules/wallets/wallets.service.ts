@@ -11,7 +11,6 @@ export class WalletService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getWallets(userId: string) {
-    console.log(userId)
     return await this.prisma.wallets.findMany({
       where: { userId },
       include: { coin: true }
