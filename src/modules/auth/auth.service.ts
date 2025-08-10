@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException, ConflictException, InternalServerErrorException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { Coins } from '@prisma/client';
+import { Users } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto } from './dto/register.dto';
@@ -67,7 +67,7 @@ export class AuthService {
           }),
         ]);
 
-        return this.generateToken(user.id);
+        return this.generateToken(user);
       });
     } catch (error) {
       if (error instanceof ConflictException) {
@@ -92,7 +92,7 @@ export class AuthService {
         throw new UnauthorizedException('Credenciais inválidas');
       }
 
-      return this.generateToken(user.id);
+      return this.generateToken(user);
     } catch (error) {
       if (error instanceof UnauthorizedException) {
         throw error;
@@ -101,11 +101,17 @@ export class AuthService {
     }
   }
 
-  private generateToken(userId: string) {
+  private generateToken(user: Users) {
     try {
-      const payload = { userId };
+      const payload = { userId: user.id };
       return {
-        access_token: this.jwtService.sign(payload),
+        user: {
+          name: user.name,
+          email: user.email
+        },
+        access_token: this.jwtService.sign(payload, {
+          expiresIn: '24h'
+        }),
       };
     } catch (error) {
       throw new InternalServerErrorException('Falha ao gerar token');
