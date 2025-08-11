@@ -5,7 +5,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
    app.enableCors({
-    origin: process.env.APP_URL, 
+    origin: [ process.env.APP_URL, "http://localhost:3000" ], // Kocalhost está aqui apenas para ser opção de uso em caso de não poder rodar o Pg 
     credentials: true, 
   });
 
