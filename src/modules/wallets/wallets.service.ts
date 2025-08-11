@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from 'prisma/prisma.service';
 import { ConvertDto } from './dto/convert.dto';
 import { TransferDto } from './dto/transfer.dto';
 import { Coins, TransactionTypes } from '@prisma/client';
