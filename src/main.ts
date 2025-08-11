@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import './vercel-prisma-fix';
+import "../vercel.json";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);  
