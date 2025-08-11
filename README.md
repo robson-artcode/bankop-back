@@ -40,6 +40,7 @@ cd bankop-back
 ```
 
 2. Configure variáveis de ambiente
+
 Crie um arquivo .env na raiz com as seguintes variáveis (exemplo):
 ```bash
 PORT=3333
@@ -47,6 +48,7 @@ APP_URL=http://localhost:3000
 JWT_SECRET=we-believe-in-points
 DATABASE_URL=postgresql://<seu_user>:<seu_password>@<seu_host>:5432/<seu_banco>
 ```
+Importante: Não esqueça de trocar as variáveis do DATABASE_URL para as variáveis do seu banco local
 
 3. Instale as dependências e configurações:
 ```bash
