@@ -61,15 +61,17 @@ npm run start:dev
 ```
 
 ---
-## 💡 Instruções
+## 📖 Guia Rápido
 
 ### Início 
 
-Na página inicial, é possível se cadastrar e entrar no sistema.
 
-É importante acentuar, que assim que é realizado o seu cadastro, a conta recebe automaticamente 5.000 OpCoins (Pontos) de promoção do projeto, onde poderá ser convertido em reais (Sendo 5 pontos para 1 real).
+### 1️⃣ Cadastro
+Ao se registrar, você recebe 5.000 OpCoins (promoção).
 
-É possível testar o cadastro, mas se quiser já usar uma das contas do sistema, pode usar qualquer uma dessas a seguir: 
+Conversão: 5 OpCoins = 1 Real.
+
+### 2️⃣ Contas de teste
 
 ```bash
 Usuário: testebankop1@gmail.com
@@ -80,13 +82,14 @@ Usuário: testebankop2@gmail.com
 Senha: 123456
 ```
 
-### Painel Principal:
+### 3️⃣ Funcionalidades do Painel Principal
 
-No painel principal, é possível acessar dois tipos de produtos. Conversão de Pontos e Transferência de valores.
+Conversão de Pontos: Troque OpCoins por Reais.
 
-Na **conversão de pontos**, é possível converter seus OpCoins em Reais. E na **transferência de valores**, é possível transferir para outro usuário tanto uma certa quantidade de OpCoins quanto uma certa quantidade de Reais.
+Transferência: Envie OpCoins ou Reais para outros usuários.
 
-Na tela de transações, é possível visualizar todas as transações realizadas e recebidas na conta.
+Histórico: Veja todas as transações feitas e recebidas.
+
 
 ## 📄 Endpoints Principais
 
