@@ -141,12 +141,24 @@ export class WalletService {
         })
       ]);
 
-      // Registra a transação
-      const transaction = await this.createTransferTransaction(
+      // Registra a transação para o usuário que recebeu a transferência
+      await this.createTransferTransaction(
+        userTo.id,
         userId,
         userTo.id,
         coin.id,
+        0,
         dto.amount
+      );
+
+      // Registra a transação para o usuário que está transferindo
+      const transaction = await this.createTransferTransaction(
+        userId,
+        userId,
+        userTo.id,
+        coin.id,
+        dto.amount,
+        0
       );
 
       return {
@@ -268,9 +280,11 @@ export class WalletService {
    */
   private async createTransferTransaction(
     userId: string,
+    userFromId: string,
     userToId: string,
     coinId: string,
-    amount: number
+    amountFrom: number,
+    amountTo: number
   ) {
     const transactionType = await this.findTransactionType('TRANSFER');
     
@@ -278,10 +292,10 @@ export class WalletService {
       data: {
         fromCoinId: coinId,
         toCoinId: coinId,
-        amountFrom: amount,
-        amountTo: 0, // Não há conversão em transferências
+        amountFrom: amountFrom,
+        amountTo: amountTo,
         userId,
-        userFromId: userId,
+        userFromId: userFromId,
         userToId: userToId,
         typeId: transactionType.id
       },
