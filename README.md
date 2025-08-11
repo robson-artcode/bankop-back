@@ -39,18 +39,18 @@ git clone https://github.com/robson-artcode/bankop-back.git
 cd bankop-back
 ```
 
-2. Instale as dependências e configurações:
-```bash
-npm run setup
-```
-
-3. Configure variáveis de ambiente
+2. Configure variáveis de ambiente
 Crie um arquivo .env na raiz com as seguintes variáveis (exemplo):
 ```bash
 PORT=3333
 APP_URL=http://localhost:3000
 JWT_SECRET=we-believe-in-points
 DATABASE_URL=postgresql://<seu_user>:<seu_password>@<seu_host>:5432/<seu_banco>
+```
+
+3. Instale as dependências e configurações:
+```bash
+npm run setup
 ```
 
 Dica: Pode dar o nome do banco que será criado de *'bankop'*
