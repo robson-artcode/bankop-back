@@ -30,6 +30,7 @@ export class AuthController {
     try {
       return await this.authService.register(dto);
     } catch (error) {
+      console.log(error)
       let message = 'Falha no cadastro. Por favor, tente novamente.';
       let status = HttpStatus.BAD_REQUEST;
 
