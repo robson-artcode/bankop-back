@@ -59,7 +59,6 @@ Dica: Pode dar o nome do banco que será criado de *'bankop'*
 ```bash
 npm run start:dev
 ```
----
 
 ---
 ## 💡 Instruções
