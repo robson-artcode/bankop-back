@@ -3,8 +3,9 @@ import { AppModule } from './app.module';
 import "../vercel.json";
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);  
+  const app = await NestFactory.create(AppModule);
   const port = process.env.PORT || 3000;
-  await app.listen(port, '0.0.0.0');
+  await app.listen(port, '0.0.0.0'); 
+  console.log(`🚀 Running on port ${port}`);
 }
 bootstrap();
