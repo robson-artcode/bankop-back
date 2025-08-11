@@ -67,7 +67,7 @@ npm run start:dev
 
 Na página inicial, é possível se cadastrar e entrar no sistema.
 
-É importante acentuar, que assim que é realizado o seu cadastro, a conta recebe automaticamente 5.000 OpCoins (Pontos) de promoção do projeto, onde pode ser convertido em reais (Sendo 5 pontos para 1 real).
+É importante acentuar, que assim que é realizado o seu cadastro, a conta recebe automaticamente 5.000 OpCoins (Pontos) de promoção do projeto, onde poderá ser convertido em reais (Sendo 5 pontos para 1 real).
 
 É possível testar o cadastro, mas se quiser já usar uma das contas do sistema, pode usar qualquer uma dessas a seguir: 
 
@@ -162,25 +162,135 @@ Authorization: Bearer <token_jwt>
   }
 ```
 
-PATCH /wallets/convert - Converte moedas
+PATCH /wallets/convert - Converte moedas do usuário autenticado
+
+**Headers:**
+```bash
+Authorization: Bearer <token_jwt>
+```
 
 **Body:**
 ```bash
 {
-  "fromCoin": "OPCOIN",
-  "toCoin": "BRL",
+  "OpCoins": 100
+}
+```
+
+**Resposta:**
+```bash
+  {
+    "updatedOpCoinBalance": "1000",
+    "updatedBRLCoinBalance": "1000",
+    "newTransaction": {
+      [
+        {
+            "id": "<uuid_code>",
+            "fromCoinId": "<uuid_code>",
+            "toCoinId": "<uuid_code>",
+            "amountFrom": "100",
+            "amountTo": "20",
+            "userId": "<uuid_code>",
+            "typeId": "<uuid_code>",
+            "userFromId": "<uuid_code>",
+            "userToId": "<uuid_code>",
+            "createdAt": "<Date>",
+            "updatedAt": "<Date>",
+            "type": {
+                "id": "<uuid_code>",
+                "type": "CONVERT",
+                "description": "Conversão"
+            },
+            "fromCoin": {
+                "id": "<uuid_code>",
+                "symbol": "OPCOIN",
+                "name": "Op Coin"
+            },
+            "toCoin": {
+                "id": "<uuid_code>",
+                "symbol": "BRL",
+                "name": "Real Brasileiro"
+            },
+            "userFrom": {
+                "id": "<uuid_code>",
+                "name": "João",
+                "email": "joao@email.com"
+            },
+            "userTo": {
+                "id": "<uuid_code>",
+                "name": "João",
+                "email": "joao@email.com"
+            }
+        }
+      ]
+    }
+  }
+```
+
+POST /wallets/transfer - Transferência entre usuários
+
+**Headers:**
+```bash
+Authorization: Bearer <token_jwt>
+```
+
+**Body:**
+```bash
+{
+  "email": "maria@email.com",
+  "amountCoin": "OPCOIN",
   "amount": 100
 }
 ```
-POST /wallets/transfer - Transferência entre usuários
 
-**Body:**
+**Resposta:**
 ```bash
-{
-  "toUserEmail": "maria@email.com",
-  "coin": "OPCOIN",
-  "amount": 50
-}
+  {
+    "newBalance": "1000",
+    "amount": "1000",
+    "amountCoin": "OPCOIN",
+    "newTransaction": {
+      [
+        {
+            "id": "<uuid_code>",
+            "fromCoinId": "<uuid_code>",
+            "toCoinId": "<uuid_code>",
+            "amountFrom": "100",
+            "amountTo": "0",
+            "userId": "<uuid_code>",
+            "typeId": "<uuid_code>",
+            "userFromId": "<uuid_code>",
+            "userToId": "<uuid_code>",
+            "createdAt": "<Date>",
+            "updatedAt": "<Date>",
+            "type": {
+                "id": "<uuid_code>",
+                "type": "TRANSFER",
+                "description": "Transferência"
+            },
+            "fromCoin": {
+                "id": "<uuid_code>",
+                "symbol": "OPCOIN",
+                "name": "Op Coin"
+            },
+            "toCoin": {
+                "id": "<uuid_code>",
+                "symbol": "OPCOIN",
+                "name": "Op Coin"
+            },
+            "userFrom": {
+                "id": "<uuid_code>",
+                "name": "João",
+                "email": "joao@email.com"
+            },
+            "userTo": {
+                "id": "<uuid_code>",
+                "name": "Maria",
+                "email": "maria@email.com"
+            }
+        }
+      ]
+    }
+  }
 ```
 
 ### Transações
@@ -191,10 +301,57 @@ GET /transactions - Retorna histórico de transações do usuário autenticado
 Authorization: Bearer <token_jwt>
 ```
 
+**Resposta:**
+```bash
+  {
+    [
+      {
+          "id": "<uuid_code>",
+          "fromCoinId": "<uuid_code>",
+          "toCoinId": "<uuid_code>",
+          "amountFrom": "100",
+          "amountTo": "0",
+          "userId": "<uuid_code>",
+          "typeId": "<uuid_code>",
+          "userFromId": "<uuid_code>",
+          "userToId": "<uuid_code>",
+          "createdAt": "<Date>",
+          "updatedAt": "<Date>",
+          "type": {
+              "id": "<uuid_code>",
+              "type": "TRANSFER",
+              "description": "Transferência"
+          },
+          "fromCoin": {
+              "id": "<uuid_code>",
+              "symbol": "OPCOIN",
+              "name": "Op Coin"
+          },
+          "toCoin": {
+              "id": "<uuid_code>",
+              "symbol": "OPCOIN",
+              "name": "Op Coin"
+          },
+          "userFrom": {
+              "id": "<uuid_code>",
+              "name": "João",
+              "email": "joao@email.com"
+          },
+          "userTo": {
+              "id": "<uuid_code>",
+              "name": "Maria",
+              "email": "maria@email.com"
+          }
+      }
+    ]
+  }
+```
+
 
 ## 💡 Decisões Técnicas
 
 - NestJS Framework: Escolhido por sua arquitetura modular e suporte nativo a TypeScript
+- Prisma: ORM type-safe com autocompletar inteligente, migrations versionadas e geração automática de tipos para o PostgreSQL
 - PostgreSQL: Banco relacional para garantia de ACID nas transações financeiras
 - JWT Stateless: Autenticação sem sessão para escalabilidade
 
