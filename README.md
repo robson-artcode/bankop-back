@@ -352,6 +352,65 @@ Authorization: Bearer <token_jwt>
   }
 ```
 
+### Perfil de Investidor
+
+GET /users/profile - Obtém o perfil do usuário autenticado
+
+**Headers:**
+```bash
+Authorization: Bearer <token_jwt>
+```
+
+**Resposta:**
+```bash
+  {
+    "profile": "conservador"
+  }
+```
+
+POST /users/profile - Cria um perfil para o usuário autenticado
+
+**Headers:**
+```bash
+Authorization: Bearer <token_jwt>
+```
+
+**Resposta:**
+```bash
+  {
+    "profile":"moderado",
+    "message":"Perfil criado com sucesso."
+  }
+```
+
+PUT /users/profile - Atualiza o perfil do usuário autenticado
+
+**Headers:**
+```bash
+Authorization: Bearer <token_jwt>
+```
+
+**Resposta:**
+```bash
+  {
+    "profile":"moderado",
+    "message":"Perfil atualizado com sucesso."
+  }
+```
+
+DELETE /users/profile - Atualiza o perfil do usuário autenticado
+
+**Headers:**
+```bash
+Authorization: Bearer <token_jwt>
+```
+
+**Resposta:**
+```bash
+  {
+    "message":"Perfil removido com sucesso."
+  }
+```
 
 ## 💡 Decisões Técnicas
 
