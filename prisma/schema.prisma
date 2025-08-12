@@ -19,8 +19,20 @@ model Users {
   transactions Transactions[]
   sentTransactions     Transactions[] @relation("FromTransactions") 
   receivedTransactions Transactions[] @relation("ToTransactions") 
-
+  UsersProfile UsersProfile[]
   @@map("users")
+}
+
+model UsersProfile {
+  id        String    @id @default(uuid())
+  profile      String
+  userId       String    @unique @map("user_id")
+  user         Users     @relation(fields: [userId], references: [id])
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("users_profile")
 }
 
 model Coins {
