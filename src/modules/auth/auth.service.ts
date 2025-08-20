@@ -158,4 +158,21 @@ export class AuthService {
       throw new InternalServerErrorException('Falha ao gerar token');
     }
   }
+
+ /**
+   * Valida um token JWT recebido
+   * 
+   * @param token Token JWT a ser validado
+   * @returns Retorna `true` se o token for válido e não expirado, ou `false` caso contrário
+   * @throws Nenhuma exceção é propagada — erros internos do JWT são tratados e retornam `false`
+   */
+  async validateToken(token: string): Promise<boolean> {
+    try {
+      // Verifica o token (vai lançar erro se for inválido/expirado)
+      this.jwtService.verify(token);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
 }

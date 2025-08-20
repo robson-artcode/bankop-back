@@ -24,7 +24,7 @@ import { PrismaModule } from 'prisma/prisma.module';
     // Configuração do módulo JWT com opções padrão
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'secret123', // Chave secreta (com fallback para desenvolvimento)
-      signOptions: { expiresIn: '7d' }, // Tokens expiram em 7 dias
+      signOptions: { expiresIn: '24h' }, // Tokens expiram em 24 horas
     }),
     // Módulo de acesso ao banco de dados via Prisma
     PrismaModule,

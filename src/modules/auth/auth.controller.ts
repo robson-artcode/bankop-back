@@ -1,4 +1,4 @@
-import { Body, Controller, Post, HttpException, HttpStatus } from '@nestjs/common';
+import { Body, Controller, Post, HttpException, HttpStatus, Get, Headers, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -70,5 +70,20 @@ export class AuthController {
 
       throw new HttpException(message, status);
     }
+  }
+
+  @Get('token-validate')
+  async tokenValidate(@Headers('authorization') authHeader: string) {
+    const token = authHeader?.split(' ')[1]; // Pega só o token do "Bearer ..."
+    const isValid = await this.authService.validateToken(token);
+
+    if (!isValid) {
+      throw new UnauthorizedException({
+        valid: false,
+        message: 'Token inválido ou expirado',
+      });
+    }
+
+    return { valid: isValid };
   }
 }
