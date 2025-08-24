@@ -139,6 +139,20 @@ POST /auth/login - Login e obtenção do token JWT
 }
 ```
 
+GET /auth/token-validate - Valida o token do usuário
+
+**Headers:**
+```bash
+Authorization: Bearer <token_jwt>
+```
+
+**Resposta:**
+```bash
+  {
+    "valid": true
+  }
+```
+
 ### Carteiras
 
 GET /wallets - Retorna as carteiras do usuário autenticado
